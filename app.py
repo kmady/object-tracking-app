@@ -31,17 +31,15 @@ templates = Jinja2Templates(directory="templates")
 # Mount static files to serve videos and CSS
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-def process_video(input_video: Path, output_video: Path):
-    """Run YOLOv8 tracking while preserving audio."""
-    command = (
-        f'ffmpeg -i "{input_video}" -vf "drawbox=x=100:y=100:w=200:h=200:color=red@0.5" '
-        f'-c:v libx264 -preset fast -c:a copy "{output_video}" -y'
-    )
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"FFmpeg error: {result.stderr.decode()}")
+def extract_audio(video_path: Path, audio_path: Path):
+    """Extracts audio from the original video."""
+    command = f'ffmpeg -i "{video_path}" -q:a 0 -map a "{audio_path}" -y'
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    return output_video
+def merge_audio(video_path: Path, audio_path: Path, output_path: Path):
+    """Merges the extracted audio back into the processed video."""
+    command = f'ffmpeg -i "{video_path}" -i "{audio_path}" -c:v copy -c:a aac -strict experimental "{output_path}" -y'
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 @app.post("/track/")
 async def track_objects(request: Request, file: UploadFile = File(...)):
@@ -54,14 +52,24 @@ async def track_objects(request: Request, file: UploadFile = File(...)):
     with video_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    processed_video_path = VIDEO_PROCESSED_FOLDER / f"processed_{unique_filename}"
+    # Paths for processing
+    audio_path = VIDEO_UPLOAD_FOLDER / f"{video_path.stem}.mp3"
+    processed_video_path = VIDEO_PROCESSED_FOLDER / f"{video_path.stem}_processed.mp4"
+    final_output_path = VIDEO_PROCESSED_FOLDER / f"{video_path.stem}_final.mp4"
+
+    # Extract audio
+    extract_audio(video_path, audio_path)
+
+    # Process video (object detection, etc.)
     process_video(video_path, processed_video_path)
 
-    return templates.TemplateResponse(
-        "result.html", 
-        {"request": request, "processed_video": f"/static/videos/processed/{processed_video_path.name}"}
-    )
+    # Merge audio back into processed video
+    merge_audio(processed_video_path, audio_path, final_output_path)
 
+    return JSONResponse({
+        "processed_video": f"/static/videos/processed/{final_output_path.name}"
+    })
+    
 @app.get("/download/{filename}")
 async def download_video(filename: str):
     """Download processed video."""
