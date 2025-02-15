@@ -9,11 +9,9 @@ import subprocess
 import uuid
 from starlette.requests import Request
 
-# Define folders
-UPLOAD_FOLDER = Path("static/videos/uploads")
-PROCESSED_FOLDER = Path("static/videos/processed")
-UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
-PROCESSED_FOLDER.mkdir(parents=True, exist_ok=True)
+from utils.config import VIDEO_UPLOAD_FOLDER, VIDEO_PROCESSED_FOLDER
+from utils.processing import process_video
+
 
 # Initialize FastAPI
 app = FastAPI(title="Multi-Object Tracking API")
@@ -52,11 +50,11 @@ async def track_objects(request: Request, file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Invalid video format. Use MP4, AVI, MOV, or MKV.")
     
     unique_filename = f"{uuid.uuid4()}_{file.filename}"
-    video_path = UPLOAD_FOLDER / unique_filename
+    video_path = VIDEO_UPLOAD_FOLDER / unique_filename
     with video_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    processed_video_path = PROCESSED_FOLDER / f"processed_{unique_filename}"
+    processed_video_path = VIDEO_PROCESSED_FOLDER / f"processed_{unique_filename}"
     process_video(video_path, processed_video_path)
 
     return templates.TemplateResponse(
@@ -67,7 +65,7 @@ async def track_objects(request: Request, file: UploadFile = File(...)):
 @app.get("/download/{filename}")
 async def download_video(filename: str):
     """Download processed video."""
-    file_path = PROCESSED_FOLDER / filename
+    file_path = VIDEO_PROCESSED_FOLDER / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     
