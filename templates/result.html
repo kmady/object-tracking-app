@@ -4,14 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Processed Video</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>Processed Video</h1>
-    <video width="640" height="360" controls>
-        <source src="{{ video_url }}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-    <br>
-    <a href="/">Upload another video</a>
+    <div class="container">
+        <h1>🎥 Your Processed Video</h1>
+
+        <video controls>
+            <source src="{{ processed_video }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <div class="buttons">
+            <a href="{{ processed_video }}" download class="btn download-btn">⬇ Download Video</a>
+            <a href="/" class="btn upload-btn">🔄 Upload Another Video</a>
+        </div>
+    </div>
 </body>
 </html>
