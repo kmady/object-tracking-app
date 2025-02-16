@@ -70,6 +70,14 @@ async def track_objects(request: Request, file: UploadFile = File(...)):
         "processed_video": f"/static/videos/processed/{final_output_path.name}"
     })
     
+@app.get("/result/{filename}", response_class=HTMLResponse)
+async def show_result(request: Request, filename: str):
+    """Display the processed video in the result page."""
+    processed_video_url = f"/static/videos/processed/{filename}"
+    return templates.TemplateResponse(
+        "result.html", {"request": request, "processed_video": processed_video_url}
+    )
+    
 @app.get("/download/{filename}")
 async def download_video(filename: str):
     """Download processed video."""
