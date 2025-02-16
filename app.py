@@ -66,17 +66,21 @@ async def track_objects(request: Request, file: UploadFile = File(...)):
     # Merge audio back into processed video
     merge_audio(processed_video_path, audio_path, final_output_path)
 
-    return JSONResponse({
-        "processed_video": f"/static/videos/processed/{final_output_path.name}"
-    })
-    
-@app.get("/result/{filename}", response_class=HTMLResponse)
-async def show_result(request: Request, filename: str):
-    """Display the processed video in the result page."""
-    processed_video_url = f"/static/videos/processed/{filename}"
+    # return JSONResponse({
+    #     "processed_video": f"/static/videos/processed/{final_output_path.name}"
+    # })
+    processed_video_url = f"/static/videos/processed/{final_output_path.name}"
     return templates.TemplateResponse(
         "result.html", {"request": request, "processed_video": processed_video_url}
     )
+    
+# @app.get("/result/{filename}", response_class=HTMLResponse)
+# async def show_result(request: Request, filename: str):
+#     """Display the processed video in the result page."""
+#     processed_video_url = f"/static/videos/processed/{filename}"
+#     return templates.TemplateResponse(
+#         "result.html", {"request": request, "processed_video": processed_video_url}
+#     )
     
 @app.get("/download/{filename}")
 async def download_video(filename: str):
