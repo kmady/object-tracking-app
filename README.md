@@ -20,6 +20,8 @@ project/
 │   │── config.py             # Configuration for file paths
 │   │── processing.py         # Object tracking logic
 │── app.py                    # FastAPI main application
+│── Dockerfile                # Project dockerfile
+│── requirements.txtx         # Project list of required packages
 │── README.md                 # Project documentation
 ```
 
