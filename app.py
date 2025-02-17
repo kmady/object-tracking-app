@@ -38,7 +38,7 @@ def extract_audio(video_path: Path, audio_path: Path):
 
 def merge_audio(video_path: Path, audio_path: Path, output_path: Path):
     """Merges the extracted audio back into the processed video."""
-    command = f'ffmpeg -i "{video_path}" -i "{audio_path}" -c:v copy -c:a aac -strict experimental "{output_path}" -y'
+    command = f'ffmpeg -i "{video_path}" -i "{audio_path}" -c:v libx264 -crf 23 -preset fast -c:a aac -strict experimental "{output_path}" -y'
     subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
 def check_video_validity(video_path: Path):
