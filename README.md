@@ -21,6 +21,7 @@ project/
 │   │── processing.py         # Object tracking logic
 │── app.py                    # FastAPI main application
 │── Dockerfile                # Project dockerfile
+│── DOCKER_README.md          # Project Docker documentation
 │── requirements.txtx         # Project list of required packages
 │── README.md                 # Project documentation
 ```
