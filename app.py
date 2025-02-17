@@ -38,8 +38,15 @@ def extract_audio(video_path: Path, audio_path: Path):
 
 def merge_audio(video_path: Path, audio_path: Path, output_path: Path):
     """Merges the extracted audio back into the processed video."""
-    command = f'ffmpeg -i "{video_path}" -i "{audio_path}" -c:v copy -c:a aac -strict experimental "{output_path}" -y'
+    command = f'ffmpeg -i "{video_path}" -i "{audio_path}" -c:v libx264 -crf 23 -preset fast -c:a aac -strict experimental "{output_path}" -y'
     subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+def check_video_validity(video_path: Path):
+    """Check if a video file contains a valid video stream."""
+    command = f'ffprobe -i "{video_path}" -show_streams -select_streams v -loglevel error'
+    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return bool(result.stdout)  # True if video stream exists
+
 
 @app.post("/track/")
 async def track_objects(request: Request, file: UploadFile = File(...)):
@@ -62,6 +69,9 @@ async def track_objects(request: Request, file: UploadFile = File(...)):
 
     # Process video (object detection, etc.)
     process_video(video_path, processed_video_path)
+    
+    if not check_video_validity(processed_video_path):
+        raise HTTPException(status_code=500, detail="Error: Processed video has no video stream.")
 
     # Merge audio back into processed video
     merge_audio(processed_video_path, audio_path, final_output_path)
