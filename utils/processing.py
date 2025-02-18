@@ -2,6 +2,11 @@ import cv2
 from utils.config import VIDEO_PROCESSED_FOLDER, model
 from pathlib import Path  # Import Path explicitly
 
+from deep_sort_realtime.deepsort_tracker import DeepSort
+
+# Initialize DeepSORT Tracker
+tracker = DeepSort(max_age=30, nn_budget=100)
+
 def process_video(video_path: Path, output_path: Path):  # Take output_path as an argument
     """Process a video frame-by-frame using YOLOv8 and save the output."""
 
