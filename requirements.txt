@@ -1,5 +1,7 @@
 fastapi
+lap
 uvicorn
 opencv-python
 python-multipart
+scipy
 ultralytics
