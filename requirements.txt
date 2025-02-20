@@ -1,7 +1,10 @@
+cython
+deep_sort_realtime
 fastapi
 lap
 uvicorn
 opencv-python
 python-multipart
 scipy
+torchaudio
 ultralytics
