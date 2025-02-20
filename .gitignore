@@ -1,7 +1,8 @@
 __pycache__/
 utils/__pycache__/
-*.mp3
-*.mp4
+static/videos/uploads/*.mp4
 *.pt
 *.pyc
-Yolov5_StrongSORT_OSNet
+static/videos/uploads/*.mp3
+static/videos/uploads/*.avi
+Yolov5_StrongSORT_OSNet/
