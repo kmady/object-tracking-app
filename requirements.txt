@@ -1,10 +1,25 @@
-cython
-deep_sort_realtime
-fastapi
-lap
-uvicorn
-opencv-python
-python-multipart
-scipy
-torchaudio
-ultralytics
+# Core Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Async support
+aiofiles>=23.2.1
+
+# ML/AI - Object Detection & Tracking
+ultralytics>=8.0.0
+deep_sort_realtime>=1.3.2
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Computer Vision
+opencv-python>=4.8.0
+
+# Scientific Computing
+scipy>=1.11.0
+numpy>=1.24.0
+lap>=0.4.0
+cython>=3.0.0
+
+# Templating
+jinja2>=3.1.2

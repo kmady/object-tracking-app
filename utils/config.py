@@ -1,6 +1,13 @@
 from pathlib import Path
-from fastapi.templating import Jinja2Templates
 from ultralytics import YOLO
+import torch
+import os
+
+# Environment configuration
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+MODEL_NAME = os.getenv("YOLO_MODEL", "yolov8n.pt")  # Options: yolov8n.pt, yolov8s.pt, yolov8m.pt, yolov8l.pt, yolov8x.pt
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.5"))
+MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "500"))
 
 # Define static folders
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,8 +18,29 @@ VIDEO_PROCESSED_FOLDER = BASE_DIR / "static/videos/processed"
 for folder in [VIDEO_UPLOAD_FOLDER, VIDEO_PROCESSED_FOLDER]:
     folder.mkdir(parents=True, exist_ok=True)
 
-# Load YOLOv8 model
-model = YOLO("yolov8n.pt")
+# Detect available device (GPU/CPU)
+def get_device() -> str:
+    """Detect and return the best available device."""
+    if torch.cuda.is_available():
+        return "cuda"
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"  # Apple Silicon
+    return "cpu"
 
-# Setup Jinja2 templates
-templates = Jinja2Templates(directory="templates")
+DEVICE = get_device()
+
+# Load YOLOv8 model with optimizations
+def load_model() -> YOLO:
+    """Load YOLO model with device optimization."""
+    model = YOLO(MODEL_NAME)
+    model.to(DEVICE)
+    return model
+
+model = load_model()
+
+# Supported video formats
+ALLOWED_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
+
+def is_valid_video_extension(filename: str) -> bool:
+    """Check if file has a valid video extension."""
+    return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
