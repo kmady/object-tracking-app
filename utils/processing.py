@@ -9,7 +9,8 @@ from utils.config import (
     model, 
     DEVICE, 
     CONFIDENCE_THRESHOLD,
-    TRACKER_TYPE
+    TRACKER_TYPE,
+    TRACKER_CONFIG_PATH
 )
 
 # Setup logging
@@ -113,7 +114,7 @@ def process_frame_with_tracking(
         conf=conf_threshold,
         device=DEVICE,
         persist=persist,
-        tracker=f"{TRACKER_TYPE}.yaml"  # botsort.yaml or bytetrack.yaml
+        tracker=str(TRACKER_CONFIG_PATH)  # Custom config or built-in tracker
     )
     
     tracked_objects = []

@@ -1,0 +1,26 @@
+# Custom BoT-SORT tracker configuration
+# Tuned for object tracking application
+# See: https://docs.ultralytics.com/modes/track/
+
+tracker_type: botsort
+
+# Detection thresholds
+track_high_thresh: 0.25    # High confidence threshold for first association (0.0-1.0)
+track_low_thresh: 0.1      # Low confidence threshold for second association (0.0-1.0)
+new_track_thresh: 0.25     # Threshold to initialize new track (0.0-1.0)
+
+# Track management
+track_buffer: 30           # Frames to keep lost tracks (higher = longer memory, more ID consistency)
+match_thresh: 0.8          # IOU threshold for matching tracks (higher = stricter matching)
+fuse_score: true           # Fuse confidence with IOU distances
+
+# BoT-SORT specific - Camera Motion Compensation
+gmc_method: sparseOptFlow  # Options: sparseOptFlow, orb, ecc, none
+                           # sparseOptFlow: Best for moving cameras
+                           # orb: Good for moderate camera motion
+                           # none: Static camera (fastest)
+
+# Re-identification (appearance matching)
+proximity_thresh: 0.5      # Spatial proximity threshold
+appearance_thresh: 0.25    # Appearance similarity threshold
+with_reid: false           # Enable Re-ID model (requires additional setup)

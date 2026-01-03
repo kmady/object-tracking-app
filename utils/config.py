@@ -3,23 +3,33 @@ from ultralytics import YOLO
 import torch
 import os
 
+# Define base directory first
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 # Environment configuration
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 MODEL_NAME = os.getenv("YOLO_MODEL", "models/yolo11n.pt")  # Options: yolo11n.pt, yolo11s.pt, yolo11m.pt, yolo11l.pt, yolo11x.pt
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.9"))
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.7"))
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "500"))
 
 # Tracker configuration - using ultralytics built-in trackers
 # Options: "botsort" (recommended - best accuracy) or "bytetrack" (fastest)
 TRACKER_TYPE = os.getenv("TRACKER_TYPE", "botsort")
 
+# Custom tracker config path (use project config files)
+TRACKER_CONFIG_DIR = BASE_DIR / "config"
+TRACKER_CONFIG_PATH = TRACKER_CONFIG_DIR / f"{TRACKER_TYPE}.yaml"
+
+# Verify tracker config exists, fallback to built-in if not
+if not TRACKER_CONFIG_PATH.exists():
+    TRACKER_CONFIG_PATH = f"{TRACKER_TYPE}.yaml"  # Use ultralytics built-in
+
 # Define static folders
-BASE_DIR = Path(__file__).resolve().parent.parent
 VIDEO_UPLOAD_FOLDER = BASE_DIR / "static/videos/uploads"
 VIDEO_PROCESSED_FOLDER = BASE_DIR / "static/videos/processed"
 
 # Create directories if they don't exist
-for folder in [VIDEO_UPLOAD_FOLDER, VIDEO_PROCESSED_FOLDER]:
+for folder in [VIDEO_UPLOAD_FOLDER, VIDEO_PROCESSED_FOLDER, TRACKER_CONFIG_DIR]:
     folder.mkdir(parents=True, exist_ok=True)
 
 # Detect available device (GPU/CPU)

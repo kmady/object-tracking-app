@@ -1,0 +1,15 @@
+# Custom ByteTrack tracker configuration
+# Optimized for speed
+# See: https://docs.ultralytics.com/modes/track/
+
+tracker_type: bytetrack
+
+# Detection thresholds
+track_high_thresh: 0.25    # High confidence threshold for first association (0.0-1.0)
+track_low_thresh: 0.1      # Low confidence threshold for second association (0.0-1.0)
+new_track_thresh: 0.25     # Threshold to initialize new track (0.0-1.0)
+
+# Track management
+track_buffer: 30           # Frames to keep lost tracks (higher = longer memory, more ID consistency)
+match_thresh: 0.8          # IOU threshold for matching tracks (higher = stricter matching)
+fuse_score: true           # Fuse confidence with IOU distances
