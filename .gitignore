@@ -1,6 +1,7 @@
 __pycache__/
 utils/__pycache__/
 static/videos/uploads/*.mp4
+static/videos/processed/*.mp4
 *.pt
 *.pyc
 static/videos/uploads/*.mp3
