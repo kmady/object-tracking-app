@@ -5,9 +5,13 @@ import os
 
 # Environment configuration
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
-MODEL_NAME = os.getenv("YOLO_MODEL", "yolov8n.pt")  # Options: yolov8n.pt, yolov8s.pt, yolov8m.pt, yolov8l.pt, yolov8x.pt
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.5"))
+MODEL_NAME = os.getenv("YOLO_MODEL", "models/yolo11n.pt")  # Options: yolo11n.pt, yolo11s.pt, yolo11m.pt, yolo11l.pt, yolo11x.pt
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.9"))
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "500"))
+
+# Tracker configuration - using ultralytics built-in trackers
+# Options: "botsort" (recommended - best accuracy) or "bytetrack" (fastest)
+TRACKER_TYPE = os.getenv("TRACKER_TYPE", "botsort")
 
 # Define static folders
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +33,7 @@ def get_device() -> str:
 
 DEVICE = get_device()
 
-# Load YOLOv8 model with optimizations
+# Load YOLO model with optimizations
 def load_model() -> YOLO:
     """Load YOLO model with device optimization."""
     model = YOLO(MODEL_NAME)

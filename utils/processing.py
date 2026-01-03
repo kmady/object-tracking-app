@@ -4,26 +4,17 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Callable
 from dataclasses import dataclass
 
-from deep_sort_realtime.deepsort_tracker import DeepSort
-
 from utils.config import (
     VIDEO_PROCESSED_FOLDER, 
     model, 
     DEVICE, 
-    CONFIDENCE_THRESHOLD
+    CONFIDENCE_THRESHOLD,
+    TRACKER_TYPE
 )
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# DeepSORT configuration
-DEEPSORT_CONFIG = {
-    "max_age": 30,           # Max frames to keep track alive without detection
-    "n_init": 3,             # Min detections before track is confirmed
-    "nn_budget": 100,        # Max samples in appearance descriptor gallery
-    "max_iou_distance": 0.7  # Max IOU distance for matching
-}
 
 
 @dataclass
@@ -51,11 +42,6 @@ def get_video_metadata(cap: cv2.VideoCapture) -> VideoMetadata:
         total_frames=total_frames,
         duration_seconds=duration
     )
-
-
-def create_tracker() -> DeepSort:
-    """Create a new DeepSORT tracker instance."""
-    return DeepSort(**DEEPSORT_CONFIG)
 
 
 def draw_tracking_box(
@@ -103,58 +89,62 @@ def draw_tracking_box(
     )
 
 
-def process_frame(
-    frame, 
-    tracker: DeepSort,
-    conf_threshold: float = CONFIDENCE_THRESHOLD
+def process_frame_with_tracking(
+    frame,
+    conf_threshold: float = CONFIDENCE_THRESHOLD,
+    persist: bool = True
 ) -> List[Tuple[Tuple[int, int, int, int], int, str]]:
     """
-    Process a single frame for object detection and tracking.
+    Process a single frame using ultralytics built-in tracking (BoT-SORT).
+    
+    Args:
+        frame: Input frame
+        conf_threshold: Confidence threshold for detections
+        persist: Whether to persist tracks between frames
     
     Returns:
         List of (bbox, track_id, class_name) tuples
     """
-    # Run YOLO detection with optimizations
-    results = model(
+    # Run YOLO tracking with BoT-SORT (built into ultralytics)
+    # Using model.track() instead of model() enables built-in tracking
+    results = model.track(
         frame, 
         verbose=False,
         conf=conf_threshold,
-        device=DEVICE
+        device=DEVICE,
+        persist=persist,
+        tracker=f"{TRACKER_TYPE}.yaml"  # botsort.yaml or bytetrack.yaml
     )
     
-    detections = []
-    class_names = {}
+    tracked_objects = []
     
     for result in results:
-        for box in result.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            conf = float(box.conf[0])
-            cls = int(box.cls[0])
-            class_name = result.names.get(cls, "object")
-            
-            # Store detection in DeepSORT format: ([x1, y1, x2, y2], confidence, class)
-            detections.append(([x1, y1, x2, y2], conf, cls))
-            class_names[cls] = class_name
-    
-    # Update tracker
-    tracks = tracker.update_tracks(detections, frame=frame)
-    
-    # Collect confirmed tracks
-    tracked_objects = []
-    for track in tracks:
-        if not track.is_confirmed():
+        # Check if tracking IDs are available
+        if result.boxes.id is None:
             continue
             
-        track_id = track.track_id
-        bbox = tuple(map(int, track.to_ltrb()))
-        
-        # Get class name from detection class if available
-        det_class = track.get_det_class() if hasattr(track, 'get_det_class') else None
-        class_name = class_names.get(det_class, "") if det_class is not None else ""
-        
-        tracked_objects.append((bbox, track_id, class_name))
+        boxes = result.boxes
+        for i in range(len(boxes)):
+            # Get bounding box coordinates
+            x1, y1, x2, y2 = map(int, boxes.xyxy[i])
+            
+            # Get track ID
+            track_id = int(boxes.id[i])
+            
+            # Get class name
+            cls = int(boxes.cls[i])
+            class_name = result.names.get(cls, "object")
+            
+            tracked_objects.append(((x1, y1, x2, y2), track_id, class_name))
     
     return tracked_objects
+
+
+def reset_tracker() -> None:
+    """Reset the tracker state for a new video."""
+    # Reset the model's tracker by calling track with a dummy reset
+    # The tracker state is automatically managed by ultralytics
+    model.predictor = None  # This resets the internal state
 
 
 def process_video(
@@ -164,7 +154,7 @@ def process_video(
     frame_skip: int = 0
 ) -> Path:
     """
-    Process a video frame-by-frame using YOLOv8 and DeepSORT.
+    Process a video frame-by-frame using YOLOv11 and BoT-SORT tracker.
     
     Args:
         video_path: Path to input video
@@ -188,6 +178,7 @@ def process_video(
             f"{metadata.fps}fps, {metadata.total_frames} frames, "
             f"{metadata.duration_seconds:.1f}s"
         )
+        logger.info(f"Using tracker: {TRACKER_TYPE}")
         
         # Initialize video writer with H.264 codec for better compatibility
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -201,8 +192,8 @@ def process_video(
         if not out.isOpened():
             raise RuntimeError(f"Error creating output video: {output_path}")
         
-        # Create tracker instance (fresh for each video)
-        tracker = create_tracker()
+        # Reset tracker for new video
+        reset_tracker()
         
         frame_count = 0
         processed_count = 0
@@ -219,8 +210,8 @@ def process_video(
             should_process = (frame_skip == 0) or (frame_count % (frame_skip + 1) == 1)
             
             if should_process:
-                # Process frame for detection and tracking
-                tracked_objects = process_frame(frame, tracker)
+                # Process frame with BoT-SORT tracking
+                tracked_objects = process_frame_with_tracking(frame)
                 last_tracked_objects = tracked_objects
                 processed_count += 1
             else:
@@ -277,7 +268,9 @@ def process_video_async_generator(
             (metadata.width, metadata.height)
         )
         
-        tracker = create_tracker()
+        # Reset tracker for new video
+        reset_tracker()
+        
         frame_count = 0
         last_tracked_objects = []
         
@@ -292,7 +285,7 @@ def process_video_async_generator(
             should_process = (frame_skip == 0) or (frame_count % (frame_skip + 1) == 1)
             
             if should_process:
-                tracked_objects = process_frame(frame, tracker)
+                tracked_objects = process_frame_with_tracking(frame)
                 last_tracked_objects = tracked_objects
             else:
                 tracked_objects = last_tracked_objects
