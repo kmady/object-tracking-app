@@ -3,5 +3,11 @@ utils/__pycache__/
 *.pyc
 Yolov5_StrongSORT_OSNet/
 
-# Note: Large files (*.pt, *.mp4, *.mp3, *.avi, etc.) are now managed by Git LFS
-# See .gitattributes for LFS-tracked file patterns
+# Runtime uploads (never commit)
+static/videos/uploads/
+
+# Video formats
+*.avi
+*.mp4
+*.mkv
+
