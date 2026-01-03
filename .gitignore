@@ -1,10 +1,7 @@
 __pycache__/
 utils/__pycache__/
-static/videos/uploads/*.mp4
-static/videos/processed/*.mp4
-*.pt
 *.pyc
-static/videos/uploads/*.mp3
-static/videos/uploads/*.avi
 Yolov5_StrongSORT_OSNet/
-*.pt
+
+# Note: Large files (*.pt, *.mp4, *.mp3, *.avi, etc.) are now managed by Git LFS
+# See .gitattributes for LFS-tracked file patterns
